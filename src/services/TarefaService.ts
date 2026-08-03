@@ -1,62 +1,61 @@
+import prisma from '../config/prismaClient.js';
 import { Tarefa } from '../models/Tarefa';
 
 class TarefaService {
-  private tarefas: Tarefa[] = [];
+  async criar(title: string): Promise<Tarefa> {
+    const novaTarefa = await prisma.task.create({
+      data: { title },
+    });
 
-  criar(title: string): Tarefa {
-    const novaTarefa: Tarefa = {
-      id: Math.random().toString(36).substring(2, 10),
-      title,
-      completed: false,
-    };
-
-    this.tarefas.push(novaTarefa);
     return novaTarefa;
   }
 
-  listarTodas(filtroCompleted?: string): Tarefa[] {
+  async listarTodas(filtroCompleted?: string): Promise<Tarefa[]> {
     if (filtroCompleted === undefined) {
-      return this.tarefas;
+      return prisma.task.findMany();
     }
 
     const completedBool = filtroCompleted === 'true';
-    return this.tarefas.filter((tarefa) => tarefa.completed === completedBool);
+    return prisma.task.findMany({
+      where: { completed: completedBool },
+    });
   }
 
-  buscarPorId(id: string): Tarefa | undefined {
-    return this.tarefas.find((tarefa) => tarefa.id === id);
+  async buscarPorId(id: string): Promise<Tarefa | null> {
+    return prisma.task.findUnique({
+      where: { id },
+    });
   }
 
-  atualizar(id: string, dados: Partial<Pick<Tarefa, 'title' | 'completed'>>): Tarefa | undefined {
-    const tarefa = this.buscarPorId(id);
+  async atualizar(
+    id: string,
+    dados: Partial<Pick<Tarefa, 'title' | 'completed'>>
+  ): Promise<Tarefa | null> {
+    const tarefaExiste = await this.buscarPorId(id);
 
-    if (!tarefa) {
-      return undefined;
+    if (!tarefaExiste) {
+      return null;
     }
 
-    if (dados.title !== undefined) {
-      tarefa.title = dados.title;
-    }
-
-    if (dados.completed !== undefined) {
-      tarefa.completed = dados.completed;
-    }
-
-    return tarefa;
+    return prisma.task.update({
+      where: { id },
+      data: dados,
+    });
   }
 
-  deletar(id: string): boolean {
-    const index = this.tarefas.findIndex((tarefa) => tarefa.id === id);
+  async deletar(id: string): Promise<boolean> {
+    const tarefaExiste = await this.buscarPorId(id);
 
-    if (index === -1) {
+    if (!tarefaExiste) {
       return false;
     }
 
-    this.tarefas.splice(index, 1);
+    await prisma.task.delete({
+      where: { id },
+    });
+
     return true;
   }
 }
 
-// Exportamos uma única instância (singleton) para que o array
-// seja compartilhado entre todas as requisições enquanto o servidor rodar.
 export default new TarefaService();
