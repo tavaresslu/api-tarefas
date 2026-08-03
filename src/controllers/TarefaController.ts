@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import tarefaService from '../services/TarefaService';
 
 class TarefaController {
-  criar(req: Request, res: Response): void {
+  async criar(req: Request, res: Response): Promise<void> {
     const { title } = req.body;
 
     if (!title || typeof title !== 'string') {
@@ -10,19 +10,19 @@ class TarefaController {
       return;
     }
 
-    const novaTarefa = tarefaService.criar(title);
+    const novaTarefa = await tarefaService.criar(title);
     res.status(201).json(novaTarefa);
   }
 
-  listarTodas(req: Request, res: Response): void {
+  async listarTodas(req: Request, res: Response): Promise<void> {
     const { completed } = req.query;
-    const tarefas = tarefaService.listarTodas(completed as string | undefined);
+    const tarefas = await tarefaService.listarTodas(completed as string | undefined);
     res.status(200).json(tarefas);
   }
 
-  buscarPorId(req: Request, res: Response): void {
+  async buscarPorId(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
-    const tarefa = tarefaService.buscarPorId(id as string);
+    const tarefa = await tarefaService.buscarPorId(id as string);
 
     if (!tarefa) {
       res.status(404).json({ erro: 'Tarefa não encontrada.' });
@@ -32,11 +32,11 @@ class TarefaController {
     res.status(200).json(tarefa);
   }
 
-  atualizar(req: Request, res: Response): void {
+  async atualizar(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const { title, completed } = req.body;
 
-    const tarefaAtualizada = tarefaService.atualizar(id as string, { title, completed });
+    const tarefaAtualizada = await tarefaService.atualizar(id as string, { title, completed });
 
     if (!tarefaAtualizada) {
       res.status(404).json({ erro: 'Tarefa não encontrada.' });
@@ -46,9 +46,9 @@ class TarefaController {
     res.status(200).json(tarefaAtualizada);
   }
 
-  deletar(req: Request, res: Response): void {
+  async deletar(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
-    const sucesso = tarefaService.deletar(id as string);
+    const sucesso = await tarefaService.deletar(id as string);
 
     if (!sucesso) {
       res.status(404).json({ erro: 'Tarefa não encontrada.' });
